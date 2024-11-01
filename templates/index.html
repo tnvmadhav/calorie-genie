@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calorie Tracker</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.3/css/bulma.min.css">
+    <style>
+        body {
+            padding: 2rem;
+        }
+        #foodimage {
+            max-width: 100%;
+            height: auto;
+        }
+    </style>
+</head>
+<body>
+    <section class="section">
+        <div class="container">
+            <h1 class="title has-text-centered">Calorie Genie</h1>
+            <div class="columns is-centered">
+                <div class="column is-half">
+                    <div class="box">
+                        <h2 class="title is-4">Upload Food Image</h2>
+                        <figure id="food-figure" class="image is-128x128 m-4" style="display: none;">
+                            <img id="foodimage" src="" alt="Food Image">
+                        </figure>
+                        <form id="food-form" enctype="multipart/form-data">
+                            <div class="file is-info">
+                                <label class="file-label">
+                                    <input class="file-input" type="file" id="food-image" name="food-image" accept="image/*" required>
+                                    <span class="file-cta">
+                                        <span class="file-icon">
+                                            <i class="fas fa-upload"></i>
+                                        </span>
+                                        <span class="file-label">Choose a food image...</span>
+                                    </span>
+                                </label>
+                            </div>
+                            <div class="field my-4">
+                                <label class="label">BMR (Basal Metabolic Rate) in kCal.</label>
+                                <div class="control">
+                                    <input id="body-bmr" class="input" type="text" name="body-bmr" placeholder="2000" required>
+                                </div>
+                                <br>
+                                <label class="label">Note</label>
+                                <div class="control">
+                                    <textarea id="optional-note" rows="4" cols="50" class="input" type="text" name="optional-note" placeholder="optional">
+                                    </textarea>
+                                </div>
+                            </div>
+                            <button class="button is-info mt-3" type="submit">Log Food</button>
+                        </form>
+                        <div id="food-result" class="notification is-info is-light mt-4"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="columns is-centered">
+                <div class="column is-half">
+                    <div class="box has-text-centered">
+                        <h3 class="title is-5">Next Meal In:</h3>
+                        <p class="subtitle is-3"><span id="next-meal-time">--</span> hours</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        $("#food-form").on("submit", function(event) {
+            event.preventDefault();
+            const formData = new FormData();
+            formData.append("food-image", $("#food-image")[0].files[0]);
+            formData.append("body-bmr", $("#body-bmr").val());
+            formData.append("optional-note", $("#optional-note").val());
+
+            $.ajax({
+                url: "/upload-food",
+                type: "POST",
+                data: formData,
+                processData: false,
+                contentType: false,
+                success: function(response) {
+                    $("#food-result").text(`Food: ${response.name}, Calories: ${response.calories}`);
+                    $("#next-meal-time").text(response.next_meal_time.toFixed(2));
+                    $("#foodimage").attr("src", response.image64);
+                    $("#foodimage").attr("alt", response.food_name);
+                    $("#food-figure").removeAttr("style")
+                }
+            });
+        });
+
+        $(document).ready(function() {
+            $('#food-image').change(function(event) {
+                const file = event.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        $('#foodimage').attr('src', e.target.result).show();
+                    };
+                    reader.readAsDataURL(file);
+                    $("#food-figure").removeAttr("style")
+                }
+            });
+        });
+    </script>
+</body>
+</html>
+
